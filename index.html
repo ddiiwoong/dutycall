@@ -12,8 +12,32 @@
     background: #f5f5f5;
     color: #333;
     padding: 8px 10px;
-    max-width: 480px;
-    margin: 0 auto;
+    padding-right: 90px;
+    margin: 0;
+  }
+
+  .ad-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+    background: #f0f0f0;
+    border-left: 1px solid #e0e0e0;
+    padding: 8px 4px;
+    overflow-y: auto;
+  }
+
+  .ad-sidebar .ad-banner {
+    margin: 0;
+    width: 100%;
+    min-height: auto;
   }
 
   .header {
@@ -174,6 +198,18 @@
   .editing .check { display: none; }
   .editing .phone-link { display: none; }
 
+  .ad-banner {
+    text-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .ad-banner a, .ad-banner img, .ad-banner iframe {
+    display: block;
+    width: 100%;
+    border: none;
+  }
+
   .add-bar {
     display: none;
     background: #fff;
@@ -255,6 +291,16 @@
 </div>
 
 <div id="list"></div>
+
+<!-- 우측 고정 광고 사이드바: 쿠팡 파트너스 코드를 ad-banner 안에 붙여넣기 -->
+<div class="ad-sidebar">
+  <div class="ad-banner" id="adTop">
+    <div style="background:#ddd;border-radius:6px;padding:20px 4px;font-size:0.55rem;color:#999;text-align:center;">AD</div>
+  </div>
+  <div class="ad-banner" id="adBottom">
+    <div style="background:#ddd;border-radius:6px;padding:20px 4px;font-size:0.55rem;color:#999;text-align:center;">AD</div>
+  </div>
+</div>
 
 <script>
 const DEFAULTS = [
