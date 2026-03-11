@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>의무통화</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding: 8px 10px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+
+  .header h1 {
+    font-size: 1.1rem;
+  }
+
+  .header .month-label {
+    font-size: 0.75rem;
+    color: #888;
+  }
+
+  .reset-btn {
+    padding: 4px 12px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    color: #888;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .reset-btn:active { background: #eee; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+  }
+
+  .total-time {
+    flex: 1;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(102,126,234,0.3);
+  }
+
+  .total-time .label {
+    font-size: 0.7rem;
+    opacity: 0.85;
+  }
+
+  .total-time .time {
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-badge {
+    font-size: 0.7rem;
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .group {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 8px;
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:active { background: #f8f8f8; }
+
+  .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .meta {
+    font-size: 0.65rem;
+    color: #999;
+    margin-top: 1px;
+  }
+
+  .phone-link {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #34c759;
+    text-decoration: none;
+  }
+
+  .phone-link svg {
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+  }
+
+  .duration {
+    display: inline-block;
+    font-size: 0.6rem;
+    background: #e8e8e8;
+    color: #555;
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .done .name { text-decoration: line-through; color: #aaa; }
+  .done .meta { color: #ccc; }
+  .done .phone-link { background: #ccc; }
+
+  .check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .done .check {
+    background: #34c759;
+    border-color: #34c759;
+  }
+
+  .check svg {
+    width: 12px;
+    height: 12px;
+    fill: #fff;
+    opacity: 0;
+  }
+
+  .done .check svg { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>의무통화</h1>
+    <div class="month-label" id="monthLabel"></div>
+  </div>
+  <button class="reset-btn" id="resetBtn">초기화</button>
+</div>
+
+<div class="top-bar">
+  <div class="total-time">
+    <div>
+      <div class="label">이번 달 누적 통화시간</div>
+      <div class="time" id="totalTime">0분 00초</div>
+    </div>
+    <div class="progress-badge" id="progress"></div>
+  </div>
+</div>
+
+<div id="list"></div>
+
+<script>
+const DATA = [
+  [
+    { name: '새마을금고', phone: '02-2192-0200', duration: '3분04초' },
+    { name: '우리은행', phone: '02-2006-5000', duration: '1분53초' },
+    { name: '신한은행', phone: '02-3708-8000', duration: '5분33초' },
+    { name: '하나은행', phone: '02-2002-2222', duration: '1분48초' },
+    { name: '씨티은행', phone: '02-3704-7000', duration: '3분03초' },
+  ],
+  [
+    { name: 'SC은행', phone: '02-730-5442', duration: '7분23초' },
+    { name: 'NH농협은행', phone: '02-3704-1004', duration: '2분29초' },
+    { name: 'KB국민카드', phone: '02-6300-7300', duration: '1분41초' },
+    { name: '신한카드', phone: '02-3420-7000', duration: '1분54초' },
+    { name: '현대카드', phone: '02-3015-9000', duration: '2분04초' },
+  ],
+  [
+    { name: '하나카드', phone: '02-3489-1000', duration: '1분01초' },
+    { name: 'NH농협카드', phone: '02-6942-6478', duration: '3분07초' },
+    { name: '롯데카드', phone: '02-2280-2400', duration: '2분00초' },
+    { name: '삼성카드', phone: '02-2000-8100', duration: '1분03초' },
+    { name: '씨티카드', phone: '02-2004-1004', duration: '2분08초' },
+  ],
+  [
+    { name: 'BC카드', phone: '02-950-8510', duration: '1분18초' },
+    { name: '우리카드', phone: '02-2169-5001', duration: '1분40초' },
+    { name: 'T로밍(SKT통신사)', phone: '02-6343-9000', duration: '1분38초' },
+    { name: '대한항공', phone: '02-2656-2001', duration: '1분16초' },
+    { name: '아시아나 항공', phone: '02-2669-8000', duration: '1분34초' },
+  ],
+  [
+    { name: '하나은행', phone: '042-520-2500', duration: '3분25초' },
+    { name: '우체국예금', phone: '042-612-6000', duration: '2분53초' },
+    { name: 'IBK기업은행', phone: '031-888-8000', duration: '3분04초' },
+    { name: '제주은행', phone: '064-759-2002', duration: '2분50초' },
+    { name: 'BNK부산은행', phone: '051-811-3333', duration: '1분48초' },
+  ],
+  [
+    { name: 'iM뱅크(대구은행)', phone: '053-742-5050', duration: '2분28초' },
+    { name: '기상콜센터', phone: '131', duration: '1분10초' },
+  ],
+];
+
+const STORAGE_KEY = 'dutycall_done';
+const MONTH_KEY = 'dutycall_month';
+
+function parseDuration(str) {
+  const m = str.match(/(\d+)분(\d+)초/);
+  return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
+}
+
+const flat = DATA.flat().sort((a, b) => parseDuration(b.duration) - parseDuration(a.duration));
+const totalCount = flat.length;
+
+function currentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function checkMonthReset() {
+  const saved = localStorage.getItem(MONTH_KEY);
+  const current = currentMonth();
+  if (saved !== current) {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.setItem(MONTH_KEY, current);
+  }
+}
+
+function loadDone() {
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function saveDone(doneSet) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...doneSet]));
+}
+
+function formatTotalTime(seconds) {
+  if (seconds === 0) return '0분 00초';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}시간 ${m}분 ${String(s).padStart(2, '0')}초`;
+  return `${m}분 ${String(s).padStart(2, '0')}초`;
+}
+
+function updateMonthLabel() {
+  const now = new Date();
+  document.getElementById('monthLabel').textContent =
+    `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
+}
+
+checkMonthReset();
+const done = loadDone();
+
+function telHref(phone) {
+  return 'tel:' + phone.replace(/[()-\s]/g, '');
+}
+
+function updateProgress() {
+  document.getElementById('progress').textContent = `${done.size} / ${totalCount}`;
+
+  let totalSec = 0;
+  done.forEach(name => {
+    const entry = flat.find(e => e.name + e.phone === name);
+    if (entry) totalSec += parseDuration(entry.duration);
+  });
+  document.getElementById('totalTime').textContent = formatTotalTime(totalSec);
+}
+
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+
+  const groupEl = document.createElement('div');
+  groupEl.className = 'group';
+
+  flat.forEach(entry => {
+    const key = entry.name + entry.phone;
+    const isDone = done.has(key);
+    const item = document.createElement('div');
+    item.className = 'item' + (isDone ? ' done' : '');
+
+    item.innerHTML = `
+      <div class="check">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      </div>
+      <div class="info">
+        <div class="name">${entry.name}</div>
+        <div class="meta">
+          <span class="duration">${entry.duration}</span>
+          ${entry.phone}
+        </div>
+      </div>
+      <a class="phone-link" href="${telHref(entry.phone)}" title="전화 걸기">
+        <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.58 1 1 0 01-.25 1.01l-2.2 2.2z"/></svg>
+      </a>
+    `;
+
+    item.querySelector('.check').addEventListener('click', () => {
+      if (done.has(key)) done.delete(key); else done.add(key);
+      saveDone(done);
+      item.classList.toggle('done');
+      updateProgress();
+    });
+
+    groupEl.appendChild(item);
+  });
+
+  list.appendChild(groupEl);
+  updateProgress();
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('완료 체크를 모두 초기화하시겠습니까?')) {
+    done.clear();
+    saveDone(done);
+    render();
+  }
+});
+
+updateMonthLabel();
+render();
+</script>
+</body>
+</html>
