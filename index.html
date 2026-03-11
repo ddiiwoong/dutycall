@@ -23,16 +23,12 @@
     padding: 4px 0;
   }
 
-  .header h1 {
-    font-size: 1.1rem;
-  }
+  .header h1 { font-size: 1.1rem; }
+  .header .month-label { font-size: 0.75rem; color: #888; }
 
-  .header .month-label {
-    font-size: 0.75rem;
-    color: #888;
-  }
+  .header-btns { display: flex; gap: 6px; }
 
-  .reset-btn {
+  .btn {
     padding: 4px 12px;
     background: none;
     border: 1px solid #ccc;
@@ -42,7 +38,8 @@
     cursor: pointer;
   }
 
-  .reset-btn:active { background: #eee; }
+  .btn:active { background: #eee; }
+  .btn.edit-active { background: #ff3b30; border-color: #ff3b30; color: #fff; }
 
   .top-bar {
     display: flex;
@@ -63,10 +60,7 @@
     box-shadow: 0 2px 6px rgba(102,126,234,0.3);
   }
 
-  .total-time .label {
-    font-size: 0.7rem;
-    opacity: 0.85;
-  }
+  .total-time .label { font-size: 0.7rem; opacity: 0.85; }
 
   .total-time .time {
     font-size: 1.15rem;
@@ -102,10 +96,7 @@
   .item:last-child { border-bottom: none; }
   .item:active { background: #f8f8f8; }
 
-  .info {
-    flex: 1;
-    min-width: 0;
-  }
+  .info { flex: 1; min-width: 0; }
 
   .name {
     font-size: 0.8rem;
@@ -115,11 +106,7 @@
     text-overflow: ellipsis;
   }
 
-  .meta {
-    font-size: 0.65rem;
-    color: #999;
-    margin-top: 1px;
-  }
+  .meta { font-size: 0.65rem; color: #999; margin-top: 1px; }
 
   .phone-link {
     flex-shrink: 0;
@@ -133,11 +120,7 @@
     text-decoration: none;
   }
 
-  .phone-link svg {
-    width: 16px;
-    height: 16px;
-    fill: #fff;
-  }
+  .phone-link svg { width: 16px; height: 16px; fill: #fff; }
 
   .duration {
     display: inline-block;
@@ -164,21 +147,74 @@
     align-items: center;
     justify-content: center;
     transition: all 0.15s;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #fff;
   }
 
-  .done .check {
-    background: #34c759;
-    border-color: #34c759;
+  .done .check { background: #34c759; border-color: #34c759; }
+
+  .delete-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #ff3b30;
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
   }
 
-  .check svg {
-    width: 12px;
-    height: 12px;
-    fill: #fff;
-    opacity: 0;
+  .editing .delete-btn { display: flex; }
+  .editing .check { display: none; }
+  .editing .phone-link { display: none; }
+
+  .add-bar {
+    display: none;
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
   }
 
-  .done .check svg { opacity: 1; }
+  .add-bar.show { display: block; }
+
+  .add-bar .row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .add-bar input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    outline: none;
+  }
+
+  .add-bar input:focus { border-color: #667eea; }
+
+  .add-bar .add-submit {
+    width: 100%;
+    padding: 8px;
+    background: #667eea;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .add-bar .add-submit:active { background: #5568d3; }
 </style>
 </head>
 <body>
@@ -188,7 +224,10 @@
     <h1>의무통화</h1>
     <div class="month-label" id="monthLabel"></div>
   </div>
-  <button class="reset-btn" id="resetBtn">초기화</button>
+  <div class="header-btns">
+    <button class="btn" id="editBtn">편집</button>
+    <button class="btn" id="resetBtn">초기화</button>
+  </div>
 </div>
 
 <div class="top-bar">
@@ -201,61 +240,84 @@
   </div>
 </div>
 
+<div class="add-bar" id="addBar">
+  <div class="row">
+    <input type="text" id="addName" placeholder="이름 (예: KB국민은행)">
+  </div>
+  <div class="row">
+    <input type="tel" id="addPhone" placeholder="전화번호 (예: 02-1234-5678)">
+    <input type="text" id="addDuration" placeholder="시간 (예: 2분30초)">
+  </div>
+  <div class="row">
+    <button class="add-submit" id="addSubmit">추가</button>
+    <button class="add-submit" id="listResetBtn" style="background:#ff3b30;">목록 초기화</button>
+  </div>
+</div>
+
 <div id="list"></div>
 
 <script>
-const DATA = [
-  [
-    { name: '새마을금고', phone: '02-2192-0200', duration: '3분04초' },
-    { name: '우리은행', phone: '02-2006-5000', duration: '1분53초' },
-    { name: '신한은행', phone: '02-3708-8000', duration: '5분33초' },
-    { name: '하나은행', phone: '02-2002-2222', duration: '1분48초' },
-    { name: '씨티은행', phone: '02-3704-7000', duration: '3분03초' },
-  ],
-  [
-    { name: 'SC은행', phone: '02-730-5442', duration: '7분23초' },
-    { name: 'NH농협은행', phone: '02-3704-1004', duration: '2분29초' },
-    { name: 'KB국민카드', phone: '02-6300-7300', duration: '1분41초' },
-    { name: '신한카드', phone: '02-3420-7000', duration: '1분54초' },
-    { name: '현대카드', phone: '02-3015-9000', duration: '2분04초' },
-  ],
-  [
-    { name: '하나카드', phone: '02-3489-1000', duration: '1분01초' },
-    { name: 'NH농협카드', phone: '02-6942-6478', duration: '3분07초' },
-    { name: '롯데카드', phone: '02-2280-2400', duration: '2분00초' },
-    { name: '삼성카드', phone: '02-2000-8100', duration: '1분03초' },
-    { name: '씨티카드', phone: '02-2004-1004', duration: '2분08초' },
-  ],
-  [
-    { name: 'BC카드', phone: '02-950-8510', duration: '1분18초' },
-    { name: '우리카드', phone: '02-2169-5001', duration: '1분40초' },
-    { name: 'T로밍(SKT통신사)', phone: '02-6343-9000', duration: '1분38초' },
-    { name: '대한항공', phone: '02-2656-2001', duration: '1분16초' },
-    { name: '아시아나 항공', phone: '02-2669-8000', duration: '1분34초' },
-  ],
-  [
-    { name: '하나은행', phone: '042-520-2500', duration: '3분25초' },
-    { name: '우체국예금', phone: '042-612-6000', duration: '2분53초' },
-    { name: 'IBK기업은행', phone: '031-888-8000', duration: '3분04초' },
-    { name: '제주은행', phone: '064-759-2002', duration: '2분50초' },
-    { name: 'BNK부산은행', phone: '051-811-3333', duration: '1분48초' },
-  ],
-  [
-    { name: 'iM뱅크(대구은행)', phone: '053-742-5050', duration: '2분28초' },
-    { name: '기상콜센터', phone: '131', duration: '1분10초' },
-  ],
+const DEFAULTS = [
+  { name: '새마을금고', phone: '02-2192-0200', duration: '3분04초' },
+  { name: '우리은행', phone: '02-2006-5000', duration: '1분53초' },
+  { name: 'SC은행', phone: '02-730-5442', duration: '7분23초' },
+  { name: '신한은행', phone: '02-3708-8000', duration: '5분33초' },
+  { name: '하나은행', phone: '02-2002-2222', duration: '1분48초' },
+  { name: '씨티은행', phone: '02-3704-7000', duration: '3분03초' },
+  { name: 'NH농협은행', phone: '02-3704-1004', duration: '2분29초' },
+  { name: 'KB국민카드', phone: '02-6300-7300', duration: '1분41초' },
+  { name: '신한카드', phone: '02-3420-7000', duration: '1분54초' },
+  { name: '현대카드', phone: '02-3015-9000', duration: '2분04초' },
+  { name: '하나카드', phone: '02-3489-1000', duration: '1분01초' },
+  { name: 'NH농협카드', phone: '02-6942-6478', duration: '3분07초' },
+  { name: '롯데카드', phone: '02-2280-2400', duration: '2분00초' },
+  { name: '삼성카드', phone: '02-2000-8100', duration: '1분03초' },
+  { name: '씨티카드', phone: '02-2004-1004', duration: '2분08초' },
+  { name: 'BC카드', phone: '02-950-8510', duration: '1분18초' },
+  { name: '우리카드', phone: '02-2169-5001', duration: '1분40초' },
+  { name: 'T로밍(SKT통신사)', phone: '02-6343-9000', duration: '1분38초' },
+  { name: '대한항공', phone: '02-2656-2001', duration: '1분16초' },
+  { name: '아시아나 항공', phone: '02-2669-8000', duration: '1분34초' },
+  { name: '하나은행', phone: '042-520-2500', duration: '3분25초' },
+  { name: '우체국예금', phone: '042-612-6000', duration: '2분53초' },
+  { name: 'IBK기업은행', phone: '031-888-8000', duration: '3분04초' },
+  { name: '제주은행', phone: '064-759-2002', duration: '2분50초' },
+  { name: 'BNK부산은행', phone: '051-811-3333', duration: '1분48초' },
+  { name: 'iM뱅크(대구은행)', phone: '053-742-5050', duration: '2분28초' },
+  { name: '기상콜센터', phone: '131', duration: '1분10초' },
 ];
 
 const STORAGE_KEY = 'dutycall_done';
 const MONTH_KEY = 'dutycall_month';
+const CUSTOM_KEY = 'dutycall_custom';
+const HIDDEN_KEY = 'dutycall_hidden';
 
 function parseDuration(str) {
   const m = str.match(/(\d+)분(\d+)초/);
   return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
 }
 
-const flat = DATA.flat().sort((a, b) => parseDuration(b.duration) - parseDuration(a.duration));
-const totalCount = flat.length;
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
+}
+
+function entryKey(e) { return e.name + '||' + e.phone; }
+
+let custom = loadJSON(CUSTOM_KEY, []);
+let hidden = loadJSON(HIDDEN_KEY, []);
+
+function saveCustom() { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); }
+function saveHidden() { localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden)); }
+
+function buildList() {
+  const all = [...DEFAULTS, ...custom];
+  return all
+    .filter(e => !hidden.includes(entryKey(e)))
+    .sort((a, b) => parseDuration(b.duration) - parseDuration(a.duration));
+}
+
+let flat = buildList();
 
 function currentMonth() {
   const now = new Date();
@@ -272,12 +334,19 @@ function checkMonthReset() {
 }
 
 function loadDone() {
-  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
-  catch { return new Set(); }
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (Array.isArray(raw)) {
+      const map = {};
+      raw.forEach(k => { map[k] = 1; });
+      return map;
+    }
+    return raw;
+  } catch { return {}; }
 }
 
-function saveDone(doneSet) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...doneSet]));
+function saveDone(obj) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
 }
 
 function formatTotalTime(seconds) {
@@ -297,19 +366,29 @@ function updateMonthLabel() {
 
 checkMonthReset();
 const done = loadDone();
+let editing = false;
 
 function telHref(phone) {
   return 'tel:' + phone.replace(/[()-\s]/g, '');
 }
 
+function doneCount() {
+  return Object.keys(done).filter(k => done[k] > 0).length;
+}
+
+function totalCallsNum() {
+  return Object.values(done).reduce((s, v) => s + v, 0);
+}
+
 function updateProgress() {
-  document.getElementById('progress').textContent = `${done.size} / ${totalCount}`;
+  const calls = totalCallsNum();
+  document.getElementById('progress').textContent = `${doneCount()}곳 / ${calls}회`;
 
   let totalSec = 0;
-  done.forEach(name => {
-    const entry = flat.find(e => e.name + e.phone === name);
-    if (entry) totalSec += parseDuration(entry.duration);
-  });
+  for (const [key, count] of Object.entries(done)) {
+    const entry = flat.find(e => entryKey(e) === key);
+    if (entry) totalSec += parseDuration(entry.duration) * count;
+  }
   document.getElementById('totalTime').textContent = formatTotalTime(totalSec);
 }
 
@@ -318,18 +397,24 @@ function render() {
   list.innerHTML = '';
 
   const groupEl = document.createElement('div');
-  groupEl.className = 'group';
+  groupEl.className = 'group' + (editing ? ' editing' : '');
 
   flat.forEach(entry => {
-    const key = entry.name + entry.phone;
-    const isDone = done.has(key);
+    const key = entryKey(entry);
     const item = document.createElement('div');
-    item.className = 'item' + (isDone ? ' done' : '');
+    item.className = 'item' + ((done[key] || 0) > 0 ? ' done' : '');
+
+    const checkEl = document.createElement('div');
+
+    function updateCheck() {
+      const c = done[key] || 0;
+      checkEl.className = 'check';
+      checkEl.textContent = c > 0 ? c : '';
+      item.className = 'item' + (c > 0 ? ' done' : '');
+    }
 
     item.innerHTML = `
-      <div class="check">
-        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-      </div>
+      <button class="delete-btn" title="삭제">&minus;</button>
       <div class="info">
         <div class="name">${entry.name}</div>
         <div class="meta">
@@ -342,11 +427,34 @@ function render() {
       </a>
     `;
 
-    item.querySelector('.check').addEventListener('click', () => {
-      if (done.has(key)) done.delete(key); else done.add(key);
+    const deleteBtn = item.querySelector('.delete-btn');
+    item.insertBefore(checkEl, deleteBtn.nextSibling);
+    updateCheck();
+
+    checkEl.addEventListener('click', () => {
+      if (editing) return;
+      if (done[key] > 0) { delete done[key]; } else { done[key] = 1; }
       saveDone(done);
-      item.classList.toggle('done');
+      updateCheck();
       updateProgress();
+    });
+
+    item.querySelector('.phone-link').addEventListener('click', () => {
+      done[key] = (done[key] || 0) + 1;
+      saveDone(done);
+      updateCheck();
+      updateProgress();
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (confirm(`${entry.name} 을(를) 삭제하시겠습니까?`)) {
+        hidden.push(key);
+        saveHidden();
+        delete done[key];
+        saveDone(done);
+        flat = buildList();
+        render();
+      }
     });
 
     groupEl.appendChild(item);
@@ -356,9 +464,65 @@ function render() {
   updateProgress();
 }
 
+// 편집 모드 토글
+const editBtn = document.getElementById('editBtn');
+const addBar = document.getElementById('addBar');
+
+editBtn.addEventListener('click', () => {
+  editing = !editing;
+  editBtn.textContent = editing ? '완료' : '편집';
+  editBtn.classList.toggle('edit-active', editing);
+  addBar.classList.toggle('show', editing);
+  render();
+});
+
+// 연락처 추가
+document.getElementById('addSubmit').addEventListener('click', () => {
+  const name = document.getElementById('addName').value.trim();
+  const phone = document.getElementById('addPhone').value.trim();
+  const duration = document.getElementById('addDuration').value.trim();
+
+  if (!name || !phone || !duration) {
+    alert('이름, 전화번호, 시간을 모두 입력해주세요.');
+    return;
+  }
+  if (!parseDuration(duration)) {
+    alert('시간 형식을 확인해주세요. (예: 2분30초)');
+    return;
+  }
+
+  const entry = { name, phone, duration };
+  if (hidden.includes(entryKey(entry))) {
+    hidden = hidden.filter(k => k !== entryKey(entry));
+    saveHidden();
+  }
+  custom.push(entry);
+  saveCustom();
+  flat = buildList();
+
+  document.getElementById('addName').value = '';
+  document.getElementById('addPhone').value = '';
+  document.getElementById('addDuration').value = '';
+
+  render();
+});
+
+// 목록 초기화
+document.getElementById('listResetBtn').addEventListener('click', () => {
+  if (confirm('추가/삭제한 연락처를 모두 원래대로 되돌리시겠습니까?')) {
+    custom = [];
+    hidden = [];
+    saveCustom();
+    saveHidden();
+    flat = buildList();
+    render();
+  }
+});
+
+// 체크 초기화
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (confirm('완료 체크를 모두 초기화하시겠습니까?')) {
-    done.clear();
+    Object.keys(done).forEach(k => delete done[k]);
     saveDone(done);
     render();
   }
