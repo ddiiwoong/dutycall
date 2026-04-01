@@ -306,7 +306,7 @@ const DEFAULTS = [
   { name: '우리은행', phone: '02-2006-5000', duration: '1분53초' },
   { name: 'SC은행', phone: '02-730-5442', duration: '7분23초' },
   { name: '신한은행', phone: '02-3708-8000', duration: '5분33초' },
-  { name: '하나은행', phone: '02-2002-2222', duration: '1분48초' },
+  { name: '하나은행(서울)', phone: '02-2002-2222', duration: '1분48초' },
   { name: '씨티은행', phone: '02-3704-7000', duration: '3분03초' },
   { name: 'NH농협은행', phone: '02-3704-1004', duration: '2분29초' },
   { name: 'KB국민카드', phone: '02-6300-7300', duration: '1분41초' },
@@ -322,7 +322,7 @@ const DEFAULTS = [
   { name: 'T로밍(SKT통신사)', phone: '02-6343-9000', duration: '1분38초' },
   { name: '대한항공', phone: '02-2656-2001', duration: '1분16초' },
   { name: '아시아나 항공', phone: '02-2669-8000', duration: '1분34초' },
-  { name: '하나은행', phone: '042-520-2500', duration: '3분25초' },
+  { name: '하나은행(대전)', phone: '042-520-2500', duration: '3분25초' },
   { name: '우체국예금', phone: '042-612-6000', duration: '2분53초' },
   { name: 'IBK기업은행', phone: '031-888-8000', duration: '3분04초' },
   { name: '제주은행', phone: '064-759-2002', duration: '2분50초' },
@@ -337,8 +337,13 @@ const CUSTOM_KEY = 'dutycall_custom';
 const HIDDEN_KEY = 'dutycall_hidden';
 
 function parseDuration(str) {
-  const m = str.match(/(\d+)분(\d+)초/);
-  return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
+  const full = str.match(/(\d+)분(\d+)초/);
+  if (full) return parseInt(full[1]) * 60 + parseInt(full[2]);
+  const minOnly = str.match(/^(\d+)분$/);
+  if (minOnly) return parseInt(minOnly[1]) * 60;
+  const secOnly = str.match(/^(\d+)초$/);
+  if (secOnly) return parseInt(secOnly[1]);
+  return 0;
 }
 
 function loadJSON(key, fallback) {
@@ -416,6 +421,15 @@ function telHref(phone) {
   return 'tel:' + phone.replace(/[()-\s]/g, '');
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function doneCount() {
   return Object.keys(done).filter(k => done[k] > 0).length;
 }
@@ -460,16 +474,20 @@ function render() {
     item.innerHTML = `
       <button class="delete-btn" title="삭제">&minus;</button>
       <div class="info">
-        <div class="name">${entry.name}</div>
+        <div class="name"></div>
         <div class="meta">
-          <span class="duration">${entry.duration}</span>
-          ${entry.phone}
+          <span class="duration"></span>
+          <span class="phone-text"></span>
         </div>
       </div>
-      <a class="phone-link" href="${telHref(entry.phone)}" title="전화 걸기">
+      <a class="phone-link" href="" title="전화 걸기">
         <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.58 1 1 0 01-.25 1.01l-2.2 2.2z"/></svg>
       </a>
     `;
+    item.querySelector('.name').textContent = entry.name;
+    item.querySelector('.duration').textContent = entry.duration;
+    item.querySelector('.phone-text').textContent = entry.phone;
+    item.querySelector('.phone-link').setAttribute('href', telHref(entry.phone));
 
     const deleteBtn = item.querySelector('.delete-btn');
     item.insertBefore(checkEl, deleteBtn.nextSibling);
